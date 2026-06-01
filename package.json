@@ -1,0 +1,31 @@
+{
+  "name": "oficina-reconhecimento-facial-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Squi1ck/oficina-reconhecimento-facial-nodejs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Squi1ck/oficina-reconhecimento-facial-nodejs/issues"
+  },
+  "homepage": "https://github.com/Squi1ck/oficina-reconhecimento-facial-nodejs#readme",
+  "dependencies": {
+    "@google-cloud/vision": "^5.3.6",
+    "@supabase/supabase-js": "^2.106.2",
+    "@vladmandic/face-api": "^1.7.15",
+    "canvas": "^3.2.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  }
+}
