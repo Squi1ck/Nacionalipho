@@ -20,74 +20,87 @@ const upload = multer({
   }
 });
 
+const NACIONALIDADES = [
+  { pais: "Portugal",    bandeira: "🇵🇹" },
+  { pais: "Brasil",      bandeira: "🇧🇷" },
+  { pais: "Espanha",     bandeira: "🇪🇸" },
+  { pais: "Itália",      bandeira: "🇮🇹" },
+  { pais: "França",      bandeira: "🇫🇷" },
+  { pais: "Alemanha",    bandeira: "🇩🇪" },
+  { pais: "Reino Unido", bandeira: "🇬🇧" },
+  { pais: "Marrocos",    bandeira: "🇲🇦" },
+  { pais: "Angola",      bandeira: "🇦🇴" },
+  { pais: "China",       bandeira: "🇨🇳" },
+  { pais: "Japão",       bandeira: "🇯🇵" },
+  { pais: "México",      bandeira: "🇲🇽" },
+  { pais: "Argentina",   bandeira: "🇦🇷" },
+  { pais: "Índia",       bandeira: "🇮🇳" },
+  { pais: "Turquia",     bandeira: "🇹🇷" },
+  { pais: "Grécia",      bandeira: "🇬🇷" },
+  { pais: "Rússia",      bandeira: "🇷🇺" },
+  { pais: "Suécia",      bandeira: "🇸🇪" },
+  { pais: "Coreia do Sul", bandeira: "🇰🇷" },
+  { pais: "Nigéria",     bandeira: "🇳🇬" }
+];
+
+const DESCRICOES = [
+  "Os teus traços são únicos e difíceis de localizar num só país!",
+  "A tua cara é um passaporte por si só — bem internacional!",
+  "Definitivamente tens sangue de mais do que um continente!",
+  "Os teus traços físicos contam uma história de várias culturas.",
+  "Podes passar por local em pelo menos 3 países diferentes!",
+  "A tua origem é um mistério delicioso para a IA!",
+  "Os teus genes claramente viajaram muito antes de chegares a ti!",
+  "Uma mistura fascinante que a IA adorou analisar!"
+];
+
+const TRACOS = [
+  "Estrutura facial equilibrada com traços mediterrânicos",
+  "Tom de pele e formato dos olhos com influências diversas",
+  "Traços faciais harmoniosos de difícil classificação geográfica",
+  "Características físicas que atravessam várias regiões do mundo",
+  "Formato do rosto e traços que remetem para múltiplas origens",
+  "Combinação única de características que desafia a classificação"
+];
+
+function gerarResultadoAleatorio() {
+  // Escolher 5 nacionalidades aleatórias sem repetição
+  const embaralhadas = [...NACIONALIDADES].sort(() => Math.random() - 0.5);
+  const escolhidas   = embaralhadas.slice(0, 5);
+
+  // Gerar percentagens que somam 100
+  const pesos = [
+    Math.floor(Math.random() * 20) + 30, // 30-50
+    Math.floor(Math.random() * 15) + 15, // 15-30
+    Math.floor(Math.random() * 10) + 10, // 10-20
+    Math.floor(Math.random() * 8)  + 5,  // 5-13
+    0
+  ];
+  pesos[4] = 100 - pesos[0] - pesos[1] - pesos[2] - pesos[3];
+
+  const nacionalidades = escolhidas.map((n, i) => ({
+    pais:        n.pais,
+    bandeira:    n.bandeira,
+    percentagem: pesos[i]
+  }));
+
+  return {
+    nacionalidades,
+    descricao:         DESCRICOES[Math.floor(Math.random() * DESCRICOES.length)],
+    tracos_detectados: TRACOS[Math.floor(Math.random() * TRACOS.length)]
+  };
+}
+
 app.post('/analisar-nacionalidade', upload.single('foto'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ erro: 'Nenhuma imagem enviada.' });
   }
 
-  try {
-    const base64Image = req.file.buffer.toString('base64');
-    const mimeType    = req.file.mimetype;
+  // Simular tempo de análise (1 a 2 segundos)
+  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-5',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType};base64,${base64Image}`
-              }
-            },
-            {
-              type: 'text',
-              text: `Analisa as características físicas visíveis desta pessoa (estrutura facial, tom de pele, traços) e faz uma estimativa divertida e criativa das 5 nacionalidades mais prováveis com percentagens.
-
-IMPORTANTE: Isto é uma aplicação de entretenimento, não científica. Sê criativo e bem-humorado.
-
-Responde APENAS com JSON válido, sem markdown, sem texto extra:
-{
-  "nacionalidades": [
-    { "pais": "Brasil", "bandeira": "🇧🇷", "percentagem": 40 },
-    { "pais": "Portugal", "bandeira": "🇵🇹", "percentagem": 25 },
-    { "pais": "Espanha", "bandeira": "🇪🇸", "percentagem": 15 },
-    { "pais": "Itália", "bandeira": "🇮🇹", "percentagem": 12 },
-    { "pais": "França", "bandeira": "🇫🇷", "percentagem": 8 }
-  ],
-  "descricao": "Frase criativa e bem-humorada sobre o resultado (máx 2 frases)",
-  "tracos_detectados": "Descrição breve e positiva dos traços físicos que influenciaram a análise"
-}`
-            }
-          ]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Erro OpenRouter API:', errText);
-      throw new Error('Falha na API');
-    }
-
-    const data          = await response.json();
-    const textoResposta = data.choices[0].message.content.trim();
-    const jsonLimpo     = textoResposta.replace(/```json\n?|\n?```/g, '').trim();
-    const resultado     = JSON.parse(jsonLimpo);
-
-    res.json({ sucesso: true, ...resultado });
-
-  } catch (err) {
-    console.error('Erro na análise:', err);
-    res.status(500).json({ erro: 'Erro ao analisar a imagem. Tenta novamente.' });
-  }
+  const resultado = gerarResultadoAleatorio();
+  res.json({ sucesso: true, ...resultado });
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
